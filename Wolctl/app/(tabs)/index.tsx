@@ -1,98 +1,225 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
-
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
+import { StyleSheet, View, Text, Pressable, ScrollView } from 'react-native';
+import { useState, useEffect } from 'react';
 import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { ThemedText } from '@/components/themed-text';
+import NetWakeNative from '@/modules/netwake-native';
+import { ConfigStorage } from '@/lib/config-storage';
+import type { Device, NetWakeConfig } from '@/modules/netwake-native';
 
-export default function HomeScreen() {
+export default function MonitorScreen() {
+  const [serviceRunning, setServiceRunning] = useState(false);
+  const [config, setConfig] = useState<NetWakeConfig | null>(null);
+  const [waking, setWaking] = useState(false);
+
+  useEffect(() => {
+    loadConfig();
+  }, []);
+
+  const loadConfig = async () => {
+    const cfg = await ConfigStorage.load();
+    setConfig(cfg);
+  };
+
+  const handleStartService = async () => {
+    try {
+      await NetWakeNative.startService();
+      setServiceRunning(true);
+    } catch (error) {
+      console.error('Failed to start service:', error);
+    }
+  };
+
+  const handleStopService = async () => {
+    try {
+      await NetWakeNative.stopService();
+      setServiceRunning(false);
+    } catch (error) {
+      console.error('Failed to stop service:', error);
+    }
+  };
+
+  const handleWakeNow = async () => {
+    try {
+      setWaking(true);
+      await NetWakeNative.wakeNow();
+      setTimeout(() => setWaking(false), 2000);
+    } catch (error) {
+      console.error('Failed to wake:', error);
+      setWaking(false);
+    }
+  };
+
+  const enabledDevices = config?.devices.filter(d => d.enabled) || [];
+  const hasDevices = enabledDevices.length > 0;
+  const hasTrustedSsids = (config?.trustedSsids.length || 0) > 0;
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <ThemedView style={styles.container}>
+      <ScrollView style={styles.scroll}>
+        <View style={styles.section}>
+          <ThemedText type="title">NetWake</ThemedText>
+          <ThemedText style={styles.subtitle}>
+            Network sentinel for your homelab
+          </ThemedText>
+        </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        <View style={styles.section}>
+          <View style={styles.statusRow}>
+            <View style={[styles.indicator, serviceRunning ? styles.indicatorOn : styles.indicatorOff]} />
+            <ThemedText type="subtitle">
+              {serviceRunning ? 'Monitoring' : 'Stopped'}
+            </ThemedText>
+          </View>
+
+          {serviceRunning ? (
+            <Pressable style={styles.buttonSecondary} onPress={handleStopService}>
+              <Text style={styles.buttonText}>Stop Service</Text>
+            </Pressable>
+          ) : (
+            <Pressable style={styles.buttonPrimary} onPress={handleStartService}>
+              <Text style={styles.buttonText}>Start Service</Text>
+            </Pressable>
+          )}
+        </View>
+
+        <View style={styles.section}>
+          <ThemedText type="defaultSemiBold">Configuration</ThemedText>
+          <View style={styles.configRow}>
+            <ThemedText>Devices:</ThemedText>
+            <ThemedText type="defaultSemiBold">
+              {enabledDevices.length} enabled
+            </ThemedText>
+          </View>
+          <View style={styles.configRow}>
+            <ThemedText>Networks:</ThemedText>
+            <ThemedText type="defaultSemiBold">
+              {config?.trustedSsids.length || 0} trusted
+            </ThemedText>
+          </View>
+          <View style={styles.configRow}>
+            <ThemedText>Delay:</ThemedText>
+            <ThemedText type="defaultSemiBold">
+              {((config?.stabilizationDelay || 0) / 1000)}s
+            </ThemedText>
+          </View>
+        </View>
+
+        {hasDevices && (
+          <View style={styles.section}>
+            <ThemedText type="defaultSemiBold">Manual Wake</ThemedText>
+            {enabledDevices.map((device) => (
+              <View key={device.id} style={styles.deviceCard}>
+                <View style={styles.deviceInfo}>
+                  <ThemedText type="defaultSemiBold">{device.name}</ThemedText>
+                  <ThemedText style={styles.deviceMac}>{device.mac}</ThemedText>
+                </View>
+              </View>
+            ))}
+            <Pressable 
+              style={[styles.buttonPrimary, waking && styles.buttonDisabled]} 
+              onPress={handleWakeNow}
+              disabled={waking}
+            >
+              <Text style={styles.buttonText}>
+                {waking ? 'Sending...' : 'Wake All Now'}
+              </Text>
+            </Pressable>
+          </View>
+        )}
+
+        {!hasDevices && (
+          <View style={styles.section}>
+            <ThemedText style={styles.hint}>
+              Add devices in the Devices tab to get started
+            </ThemedText>
+          </View>
+        )}
+
+        {!hasTrustedSsids && (
+          <View style={styles.section}>
+            <ThemedText style={styles.hint}>
+              Add trusted Wi-Fi networks in the Networks tab
+            </ThemedText>
+          </View>
+        )}
+      </ScrollView>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+  },
+  scroll: {
+    flex: 1,
+    padding: 16,
+  },
+  section: {
+    marginBottom: 24,
+  },
+  subtitle: {
+    opacity: 0.6,
+    marginTop: 4,
+  },
+  statusRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 12,
+    marginBottom: 16,
   },
-  stepContainer: {
-    gap: 8,
+  indicator: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+  },
+  indicatorOn: {
+    backgroundColor: '#4CAF50',
+  },
+  indicatorOff: {
+    backgroundColor: '#666',
+  },
+  buttonPrimary: {
+    backgroundColor: '#2196F3',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  buttonSecondary: {
+    backgroundColor: '#666',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  configRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+  },
+  deviceCard: {
+    padding: 12,
+    borderRadius: 8,
+    backgroundColor: '#f5f5f5',
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  deviceInfo: {
+    gap: 4,
+  },
+  deviceMac: {
+    fontFamily: 'monospace',
+    fontSize: 12,
+    opacity: 0.6,
+  },
+  hint: {
+    opacity: 0.5,
+    fontStyle: 'italic',
   },
 });

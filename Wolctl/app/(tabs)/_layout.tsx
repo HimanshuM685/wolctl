@@ -19,15 +19,29 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: 'Monitor',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="antenna.radiowaves.left.and.right" color={color} />,
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="devices"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Devices',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="server.rack" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="networks"
+        options={{
+          title: 'Networks',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="wifi" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="gearshape.fill" color={color} />,
         }}
       />
     </Tabs>
