@@ -1,4 +1,5 @@
 import { StyleSheet, View, Text, TextInput, Pressable, ScrollView, Alert } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
@@ -60,7 +61,8 @@ export default function NetworksScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView style={styles.scroll}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <ThemedText type="title">Networks</ThemedText>
           <Pressable style={styles.addButton} onPress={handleAdd}>
@@ -119,7 +121,8 @@ export default function NetworksScreen() {
             </Pressable>
           </View>
         ))}
-      </ScrollView>
+        </ScrollView>
+      </SafeAreaView>
     </ThemedView>
   );
 }
@@ -128,8 +131,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scroll: {
+  safeArea: {
     flex: 1,
+  },
+  scrollContent: {
     padding: 16,
   },
   header: {

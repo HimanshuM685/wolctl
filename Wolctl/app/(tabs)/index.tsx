@@ -1,4 +1,5 @@
 import { StyleSheet, View, Text, Pressable, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useEffect } from 'react';
 import { ThemedView } from '@/components/themed-view';
 import { ThemedText } from '@/components/themed-text';
@@ -55,7 +56,8 @@ export default function MonitorScreen() {
 
   return (
     <ThemedView style={styles.container}>
-      <ScrollView style={styles.scroll}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+        <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.section}>
           <ThemedText type="title">NetWake</ThemedText>
           <ThemedText style={styles.subtitle}>
@@ -142,7 +144,8 @@ export default function MonitorScreen() {
             </ThemedText>
           </View>
         )}
-      </ScrollView>
+        </ScrollView>
+      </SafeAreaView>
     </ThemedView>
   );
 }
@@ -151,8 +154,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scroll: {
+  safeArea: {
     flex: 1,
+  },
+  scrollContent: {
     padding: 16,
   },
   section: {
