@@ -18,6 +18,7 @@ module.exports = {
     },
   },
   project: {
+    ios: {},
     android: {
       packageName: 'com.netwake.app',
     },
