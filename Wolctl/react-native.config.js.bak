@@ -4,7 +4,7 @@ module.exports = {
       platforms: {
         android: {
           sourceDir: '../node_modules/react-native-safe-area-context/android',
-          packageImportPath: 'import io.invertase.reactnative.RNCSafeAreaContextPackage;',
+          packageImportPath: 'import com.th3rdwave.safeareacontext.SafeAreaContextPackage;',
         },
       },
     },
@@ -12,7 +12,7 @@ module.exports = {
       platforms: {
         android: {
           sourceDir: '../node_modules/react-native-screens/android',
-          packageImportPath: 'import com.swmansion.reanimated.ReanimatedPackage;',
+          packageImportPath: 'import com.swmansion.screens.RNScreensPackage;',
         },
       },
     },

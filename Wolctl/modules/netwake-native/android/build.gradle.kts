@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace = "com.netwake.native"
+    namespace = "com.netwake.nativelib"
     compileSdk = 34
     
     defaultConfig {
