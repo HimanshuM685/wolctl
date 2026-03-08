@@ -40,24 +40,28 @@ object WolEngine {
         val packet = buildMagicPacket(macBytes)
         
         return try {
+            // Use unbound socket for maximum compatibility
             DatagramSocket().use { socket ->
+                // Critical: Enable broadcast on Android
                 socket.broadcast = true
+                
+                // Resolve the broadcast address
                 val address = InetAddress.getByName(broadcastIp)
                 
                 repeat(retries) { attempt ->
                     val datagram = DatagramPacket(packet, packet.size, address, port)
                     socket.send(datagram)
                     
-                    Log.d(TAG, "WoL sent to $macAddress (attempt ${attempt + 1}/$retries)")
+                    Log.d(TAG, "WoL packet #${attempt + 1}/$retries sent to $macAddress at $broadcastIp:$port (${packet.size} bytes)")
                     
                     if (attempt < retries - 1) {
-                        Thread.sleep(1000) // 1s gap between retries
+                        Thread.sleep(250) // Short gap between retries
                     }
                 }
                 true
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to send WoL to $macAddress", e)
+            Log.e(TAG, "Failed to send WoL to $macAddress: ${e.message}", e)
             false
         }
     }
